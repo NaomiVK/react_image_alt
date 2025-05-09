@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF.js Issue Solution</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .solution {
+            background-color: #e6f7ff;
+            padding: 15px;
+            border-left: 4px solid #1890ff;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF.js Issue Solution</h1>
+    
+    <h2>The Issue</h2>
+    <p>The error message you're seeing is:</p>
+    <pre>10:39:14 a.m. [vite] Pre-transform error: Failed to load url /pdf.mjs (resolved id: /pdf.mjs). This file is in /public and will be copied as-is during build without going through the plugin transforms, and therefore should not be imported from source code. It can only be referenced via HTML tags.</pre>
+    
+    <h2>What's Happening</h2>
+    <p>Vite is telling us that the PDF.js files in the public directory should not be imported directly from source code. Instead, they should be referenced via HTML tags.</p>
+    
+    <div class="solution">
+        <h2>Solution</h2>
+        <p>There are two ways to fix this issue:</p>
+        
+        <h3>Option 1: Move PDF.js files out of public</h3>
+        <p>Move the PDF.js files from the public directory to a regular source directory:</p>
+        <pre>
+// Move files from:
+public/pdf.mjs
+public/pdf.worker.mjs
+
+// To:
+src/lib/pdf.mjs
+src/lib/pdf.worker.mjs
+        </pre>
+        <p>Then update your imports to use the new location:</p>
+        <pre>
+import * as pdfjs from '../lib/pdf.mjs';
+        </pre>
+        
+        <h3>Option 2: Use script tags in HTML</h3>
+        <p>Instead of importing PDF.js in your JavaScript code, load it via script tags in your HTML:</p>
+        <pre>
+&lt;!-- In your HTML file -->
+&lt;script src="/pdf.mjs" type="module">&lt;/script>
+&lt;script>
+  // Access PDF.js via the global window.pdfjsLib object
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.mjs';
+&lt;/script>
+        </pre>
+        
+        <h3>Option 3: Use a CDN version</h3>
+        <p>Use a CDN version of PDF.js instead of hosting it yourself:</p>
+        <pre>
+&lt;!-- In your HTML file -->
+&lt;script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js">&lt;/script>
+&lt;script>
+  // Set the worker source
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+&lt;/script>
+        </pre>
+    </div>
+    
+    <h2>Recommended Solution</h2>
+    <p>For your specific case, Option 3 (using a CDN) is the simplest solution. Add the following script tags to your HTML file before your main script:</p>
+    <pre>
+&lt;!-- PDF.js from CDN -->
+&lt;script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js">&lt;/script>
+&lt;script>
+  // Set the worker source
+  window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
+&lt;/script>
+    </pre>
+    
+    <p>Then update your code to use the global pdfjsLib object instead of importing it.</p>
+</body>
+</html>

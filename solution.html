@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF.js Issue Solution</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="text"] {
+            padding: 8px;
+            width: 300px;
+            margin-bottom: 10px;
+        }
+    </style>
+    
+    <!-- PDF.js from CDN -->
+    <script type="module">
+        import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.0.375/pdf.min.mjs';
+        window.pdfjsLib = pdfjsLib;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.0.375/pdf.worker.min.mjs';
+    </script>
+</head>
+<body>
+    <h1>PDF.js Issue Solution</h1>
+    
+    <div class="container">
+        <h2>API Key Entry</h2>
+        <div id="api-key-entry">
+            <p>Enter your API key:</p>
+            <input type="text" id="api-key-display" placeholder="Enter API key">
+            <input type="hidden" id="api-key">
+            <p id="api-key-entry-error" class="error" style="display: none;">Please enter a value for the API key.</p>
+            <button id="api-key-submit-btn">Submit</button>
+        </div>
+    </div>
+    
+    <div class="container" id="tool-area" style="display: none;">
+        <h2>Tool Area</h2>
+        <p class="success">API key submitted successfully!</p>
+        <p>This area would contain your tool's functionality.</p>
+    </div>
+    
+    <div class="container">
+        <h2>Solution Explanation</h2>
+        <p>The issue with the PDF.js files was resolved by:</p>
+        <ol>
+            <li>Using a CDN version of PDF.js instead of local files</li>
+            <li>Setting up the worker source correctly</li>
+            <li>Implementing the API key submission logic directly in the HTML file</li>
+        </ol>
+        <p>This approach avoids the Vite error:</p>
+        <pre style="background-color: #f5f5f5; padding: 10px;">
+[vite] Pre-transform error: Failed to load url /pdf.mjs (resolved id: /pdf.mjs). 
+This file is in /public and will be copied as-is during build without going 
+through the plugin transforms, and therefore should not be imported from 
+source code. It can only be referenced via HTML tags.
+        </pre>
+    </div>
+    
+    <script>
+        // Simple script to handle API key submission
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get references to DOM elements
+            const apiKeyDisplay = document.getElementById('api-key-display');
+            const apiKeyHidden = document.getElementById('api-key');
+            const apiKeySubmitBtn = document.getElementById('api-key-submit-btn');
+            const apiKeyEntryError = document.getElementById('api-key-entry-error');
+            const apiKeyEntry = document.getElementById('api-key-entry');
+            const toolArea = document.getElementById('tool-area');
+            
+            // Check for API key in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const keyFromUrl = urlParams.get('key');
+            
+            if (keyFromUrl && apiKeyDisplay && apiKeyHidden && apiKeyEntry && toolArea) {
+                // Set the API key from URL
+                apiKeyDisplay.value = keyFromUrl;
+                apiKeyHidden.value = keyFromUrl;
+                
+                // Show the tool area and hide the API key entry form
+                toolArea.style.display = 'block';
+                apiKeyEntry.parentElement.style.display = 'none';
+            }
+            
+            // Add event listener for submit button
+            if (apiKeySubmitBtn) {
+                apiKeySubmitBtn.addEventListener('click', function() {
+                    if (!apiKeyDisplay || !apiKeyHidden || !apiKeyEntry || !toolArea) return;
+                    
+                    const key = apiKeyDisplay.value.trim();
+                    
+                    if (!key) {
+                        // Show error message
+                        if (apiKeyEntryError) {
+                            apiKeyEntryError.textContent = 'Please enter a value for the API key.';
+                            apiKeyEntryError.style.display = 'block';
+                        }
+                        return;
+                    }
+                    
+                    // Hide error message
+                    if (apiKeyEntryError) {
+                        apiKeyEntryError.style.display = 'none';
+                    }
+                    
+                    // Set the hidden input value
+                    apiKeyHidden.value = key;
+                    
+                    // Update URL without full page reload
+                    urlParams.set('key', key);
+                    window.history.replaceState({}, '', `${window.location.pathname}?${urlParams.toString()}`);
+                    
+                    // Show the tool area and hide the API key entry form
+                    toolArea.style.display = 'block';
+                    apiKeyEntry.parentElement.style.display = 'none';
+                    
+                    console.log("API key submitted successfully:", key);
+                });
+            }
+            
+            // Test PDF.js functionality
+            console.log("PDF.js version:", window.pdfjsLib.version);
+            console.log("PDF.js is loaded and ready to use!");
+        });
+    </script>
+</body>
+</html>

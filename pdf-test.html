@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF.js Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        #pdf-info {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin-top: 20px;
+        }
+        #pdf-canvas {
+            display: none;
+        }
+        #visible-canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>PDF.js Test</h1>
+    <p>This page tests if PDF.js is working correctly.</p>
+    
+    <div>
+        <input type="file" id="pdf-file" accept=".pdf">
+        <button id="load-pdf">Load PDF</button>
+    </div>
+    
+    <div id="pdf-info"></div>
+    
+    <!-- Hidden canvas for processing -->
+    <canvas id="pdf-canvas" width="1000" height="1000"></canvas>
+    
+    <!-- Visible canvas for display -->
+    <canvas id="visible-canvas" width="800" height="600"></canvas>
+    
+    <!-- Load PDF.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Set the worker source
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const pdfFileInput = document.getElementById('pdf-file');
+            const loadPdfButton = document.getElementById('load-pdf');
+            const pdfInfo = document.getElementById('pdf-info');
+            const hiddenCanvas = document.getElementById('pdf-canvas');
+            const visibleCanvas = document.getElementById('visible-canvas');
+            
+            // Log PDF.js version
+            pdfInfo.innerHTML = `<p>PDF.js version: ${pdfjsLib.version}</p>`;
+            
+            loadPdfButton.addEventListener('click', async function() {
+                if (!pdfFileInput.files || pdfFileInput.files.length === 0) {
+                    pdfInfo.innerHTML += '<p style="color: red;">Please select a PDF file first.</p>';
+                    return;
+                }
+                
+                const file = pdfFileInput.files[0];
+                pdfInfo.innerHTML += `<p>Loading PDF: ${file.name}</p>`;
+                
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+                    const pdf = await loadingTask.promise;
+                    
+                    pdfInfo.innerHTML += `<p>PDF loaded successfully. Total pages: ${pdf.numPages}</p>`;
+                    
+                    // Render the first page
+                    const page = await pdf.getPage(1);
+                    const viewport = page.getViewport({ scale: 1.0 });
+                    
+                    // Set canvas dimensions to match the viewport
+                    hiddenCanvas.width = viewport.width;
+                    hiddenCanvas.height = viewport.height;
+                    visibleCanvas.width = viewport.width;
+                    visibleCanvas.height = viewport.height;
+                    
+                    // Render to hidden canvas
+                    const hiddenContext = hiddenCanvas.getContext('2d');
+                    await page.render({
+                        canvasContext: hiddenContext,
+                        viewport: viewport
+                    }).promise;
+                    
+                    // Copy to visible canvas
+                    const visibleContext = visibleCanvas.getContext('2d');
+                    visibleContext.drawImage(hiddenCanvas, 0, 0);
+                    
+                    pdfInfo.innerHTML += `<p>First page rendered successfully.</p>`;
+                    
+                } catch (error) {
+                    pdfInfo.innerHTML += `<p style="color: red;">Error: ${error.message}</p>`;
+                    console.error('Error processing PDF:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
